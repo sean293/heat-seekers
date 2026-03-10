@@ -48,13 +48,13 @@ export default function AboutPage() {
 
       <div className="grid gap-12 max-w-5xl mx-auto md:grid-cols-2">
         {team.map((member, i) => (
-          <div key={i} className="flex flex-col items-center text-center">
+          <div key={member.name} className="flex flex-col items-center text-center">
             <div className="w-52 h-52 rounded-full overflow-hidden shadow-md">
               <Image
                 src={member.image}
                 alt={member.name}
-                width={180}
-                height={180}
+                width={208}
+                height={208}
                 className="object-cover w-full shadow-md"
               />
             </div>
