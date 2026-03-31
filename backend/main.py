@@ -5,8 +5,6 @@ import xarray as xr
 import numpy as np
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.cors import CORSMiddleware as StarletteCORSMiddleware
-import re
 
 app = FastAPI(title="Heat Seekers API")
 
