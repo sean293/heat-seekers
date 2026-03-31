@@ -1,10 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import MapView from "@/components/MapView";
 
 export default function Dashboard() {
   const [chartType, setChartType] = useState("line");
+  const [apiTest, setApiTest] = useState<string>("Loading...");
+
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/test-b2`)
+      .then(res => res.json())
+      .then(data => setApiTest(`✅ Connected! Found ${data.files.length} files`))
+      .catch(err => setApiTest(`❌ Error: ${err.message}`));
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-200 px-6 py-10">
@@ -14,6 +22,11 @@ export default function Dashboard() {
         <h1 className="text-4xl font-bold text-orange-400 mb-8">
           Heat Wave Dashboard
         </h1>
+
+        {/* API Test Banner */}
+        <div className="bg-white p-4 rounded-xl shadow mb-4 text-gray-700 font-mono text-sm">
+          B2 Connection: {apiTest}
+        </div>
 
         {/* Filters */}
         <div className="bg-white p-6 rounded-xl shadow mb-8 flex gap-6">
