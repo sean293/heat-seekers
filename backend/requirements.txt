@@ -1,0 +1,19 @@
+# Server
+fastapi
+uvicorn[standard]
+
+# Data processing
+xarray
+dask[complete]
+netCDF4
+numpy
+pandas
+scipy
+
+# Cloud storage (Backblaze B2)
+boto3
+
+# Notebook/data download utilities (keep these)
+ipykernel
+requests
+tqdm
