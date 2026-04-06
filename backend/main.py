@@ -83,10 +83,20 @@ def get_excd_summary(year: int, month: int):
     """Return a spatial mean summary for a given year and month."""
     ds = load_tile(year, month)
     summary = ds["EXCD"].mean(dim="time")
+    
+    # Replace NaN with None for JSON serialization
+    import numpy as np
+    data = summary.values.tolist()
+    cleaned = [
+        [None if (v is not None and isinstance(v, float) and np.isnan(v)) else v 
+         for v in row]
+        for row in data
+    ]
+    
     return {
         "year": year,
         "month": month,
         "x": ds["x"].values.tolist(),
         "y": ds["y"].values.tolist(),
-        "excd_mean": summary.values.tolist()
+        "excd_mean": cleaned
     }
