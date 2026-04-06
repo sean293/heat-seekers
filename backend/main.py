@@ -84,14 +84,9 @@ def get_excd_summary(year: int, month: int):
     ds = load_tile(year, month)
     summary = ds["EXCD"].mean(dim="time")
     
-    # Replace NaN with None for JSON serialization
-    import numpy as np
-    data = summary.values.tolist()
-    cleaned = [
-        [None if (v is not None and isinstance(v, float) and np.isnan(v)) else v 
-         for v in row]
-        for row in data
-    ]
+    # Replace NaN with None using numpy directly before converting to list
+    values = summary.values  # still a numpy array here
+    cleaned = np.where(np.isnan(values), None, values).tolist()
     
     return {
         "year": year,
