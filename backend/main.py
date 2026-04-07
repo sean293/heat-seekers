@@ -78,15 +78,24 @@ def get_excd(year: int, month: int):
     }
 
 
+def load_tile(year: int, month: int) -> xr.Dataset:
+    key = f"tiles/excd_{year}_{month:02d}.nc"
+    with tempfile.NamedTemporaryFile(suffix=".nc", delete=False) as tmp:
+        try:
+            s3.download_file(BUCKET, key, tmp.name)
+        except Exception:
+            raise
+
 @app.get("/excd/{year}/{month}/summary")
 def get_excd_summary(year: int, month: int):
-    """Return a spatial mean summary for a given year and month."""
     ds = load_tile(year, month)
-    summary = ds["EXCD"].mean(dim="time")
     
-    # Replace NaN with None using numpy directly before converting to list
-    values = summary.values  # still a numpy array here
+    # Compute mean in chunks to avoid loading everything at once
+    summary = ds["EXCD"].mean(dim="time").load()
+    values = summary.values
     cleaned = np.where(np.isnan(values), None, values).tolist()
+    
+    ds.close()  # explicitly free memory after use
     
     return {
         "year": year,
