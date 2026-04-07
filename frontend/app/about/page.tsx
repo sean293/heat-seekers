@@ -33,7 +33,38 @@ const team = [
     ],
     bio: "bio",
     email: "mostafarezaali@ufl.edu"
+  },
+    {
+    name: "Sean Hamilton",
+    role: "Web Developer",
+    image: "/images/emptyPic.jpg",
+    education: [
+      "education"
+      
+    ],
+    interests: [
+      "interests"
+      
+    ],
+    bio: "bio",
+    email: ""
+  },
+    {
+    name: "Andrew Berland",
+    role: "Web Developer",
+    image: "/images/emptyPic.jpg",
+    education: [
+      "education"
+      
+    ],
+    interests: [
+      "interests"
+      
+    ],
+    bio: "bio",
+    email: "mostafarezaali@ufl.edu"
   }
+
 ];
 
 export default function AboutPage() {

@@ -1,8 +1,8 @@
-import "maplibre-gl/dist/maplibre-gl.css";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "maplibre-gl/dist/maplibre-gl.css";
 import Dashboard from "./dashboard/page";
 
 const geistSans = Geist({

@@ -5,31 +5,32 @@
 # ========================
 
 # dependencies
-frontend/node_modules
-frontend/.pnp
-frontend/.pnp.*
-frontend/.yarn/*
-!frontend/.yarn/patches
-!frontend/.yarn/plugins
-!frontend/.yarn/releases
-!frontend/.yarn/versions
+**/node_modules/
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
 
 # testing
-frontend/coverage
+**/coverage
 
 # next.js
-frontend/.next/
-frontend/out/
+**/.next/
+**/out/
 
 # production
-frontend/build
+**/build
 
 # typescript
-frontend/*.tsbuildinfo
-frontend/next-env.d.ts
+
+**/*.tsbuildinfo
+**/next-env.d.ts
 
 # vercel
-.vercel
+**/.vercel
 
 # ========================
 # Backend (FastAPI/Python)
