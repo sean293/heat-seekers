@@ -79,12 +79,18 @@ def get_excd(year: int, month: int):
 
 
 def load_tile(year: int, month: int) -> xr.Dataset:
+    """Download a monthly EXCD tile from B2 and open it with xarray."""
     key = f"tiles/excd_{year}_{month:02d}.nc"
-    with tempfile.NamedTemporaryFile(suffix=".nc", delete=False) as tmp:
-        try:
-            s3.download_file(BUCKET, key, tmp.name)
-        except Exception:
-            raise
+    tmp = tempfile.NamedTemporaryFile(suffix=".nc", delete=False)
+    tmp_path = tmp.name
+    tmp.close()
+    
+    try:
+        s3.download_file(BUCKET, key, tmp_path)
+    except Exception:
+        raise HTTPException(status_code=404, detail=f"No data found for {year}-{month:02d}")
+    
+    return xr.open_dataset(tmp_path)
 
 @app.get("/excd/{year}/{month}/summary")
 def get_excd_summary(year: int, month: int):
