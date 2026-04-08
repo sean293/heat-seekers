@@ -20,16 +20,16 @@ interface ExcdSummaryResponse {
 
 function convertGridToGeoJSON(data: ExcdSummaryResponse): GeoJSON.FeatureCollection {
   const features: GeoJSON.Feature[] = [];
-  for (let i = 0; i < data.y.length; i += 5) {
-    for (let j = 0; j < data.x.length; j += 5) {
-      const value = data.excd_mean[i]?.[j];
+  for (let xi = 0; xi < data.x.length; xi += 5) {
+    for (let yi = 0; yi < data.y.length; yi += 5) {
+      const value = data.excd_mean[xi]?.[yi];
       if (value === null || value === undefined || value === 0) continue;
       features.push({
         type: "Feature",
         properties: { temp: value },
         geometry: {
           type: "Point",
-          coordinates: [data.x[j], data.y[i]],
+          coordinates: [data.x[xi], data.y[yi]],
         },
       });
     }
