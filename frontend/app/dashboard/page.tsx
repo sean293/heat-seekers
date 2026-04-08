@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import MapView from "@/components/MapView";
+import dynamic from "next/dynamic";
 import TempLineChart from "@/components/LineChart";
+
+const MapView = dynamic(() => import("@/components/MapView"), { ssr: false });
 
 export default function Dashboard() {
   const [chartType, setChartType] = useState("map");

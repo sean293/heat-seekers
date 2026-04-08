@@ -14,7 +14,7 @@ const DEFAULT_VIEW = {
   pitch: 0,
 };
 
-// converst grid data to GeoJSON format for MapLibre
+// convert grid data to GeoJSON format for MapLibre
 function convertGridToGeoJSON(data: any): GeoJSON.FeatureCollection {
   const features: GeoJSON.Feature[] = [];
 
@@ -49,7 +49,7 @@ export default function MapView({ month, state, onResetState }: { month: string;
   const [mapLoaded, setMapLoaded] = useState(false);
 
 function resetView() {
-    if (map.current) {
+    if (map.current && mapLoaded) {
       map.current.flyTo({
         center: DEFAULT_VIEW.center,
         zoom: DEFAULT_VIEW.zoom,
@@ -75,19 +75,21 @@ function resetView() {
     NE: [-99.5, 41.5], NV: [-116.0, 39.5],  NH: [-71.5, 44.0], NJ: [-74.5, 40.1], 
     NM: [-106.0, 34.5], NY: [-75.0, 43.0],  NC: [-79.0, 35.5], ND: [-100.5, 47.5], 
     OH: [-82.8, 40.4], OK: [-97.5, 35.5],  OR: [-120.5, 44.0], PA: [-77.5, 41.0], 
-    RI: [-71.5, 41.6], SC: [-80.9, 33.8],  SD: [-100.0, 44.5], TN: [-86.6, 35.8], 
+    RI: [-71.5, 41.6], SC: [-80.9, 33.8],  SD: [-100.0, 44.5], TN: [-86.6, 35.8],
     TX: [-99.3, 31.0], UT: [-111.7, 39.3],  VT: [-72.7, 43.8], VA: [-78.5, 37.5], 
     WA: [-120.7, 47.4], WV: [-80.7, 38.9],  WI: [-89.5, 44.5], WY: [-107.5, 43.0],
   };
 
   useEffect(() => {
-    if (map.current) return;
+    if (map.current || !mapContainer.current) return;
+
+    let destroyed = false;
 
     map.current = new maplibregl.Map({
       container: mapContainer.current!,
       style: "https://demotiles.maplibre.org/style.json",
-      center: [-98, 39],
-      zoom: 0,
+      center: DEFAULT_VIEW.center,
+      zoom: DEFAULT_VIEW.zoom,
       minZoom: 0,
       maxZoom: 5.5,
       maxBounds: [
@@ -100,6 +102,7 @@ function resetView() {
 
     // When the map loads
     map.current.on("load", () => {
+      if (destroyed) return;
       // empty source initially
       map.current!.addSource("heat-data", {
         type: "geojson",
@@ -167,6 +170,7 @@ function resetView() {
     });
 
     return () => {
+      destroyed = true;
       map.current?.remove();
       map.current = null;
     };
@@ -174,20 +178,55 @@ function resetView() {
   }, []);
 
   // Update heatmap data when month changes
-  useEffect(() => {
-    if (!map.current || !mapLoaded) return;
+  // useEffect(() => {
+  //   if (!map.current || !mapLoaded || !month) return;
     
-    const data = fakeDataByMonth[month];
-    if(!data) return;
+  //   const data = fakeDataByMonth[month];
+  //   if(!data) return;
 
-    const geojson = convertGridToGeoJSON(data);
+  //   const geojson = convertGridToGeoJSON(data);
 
-    const source = map.current.getSource("heat-data") as maplibregl.GeoJSONSource;
+  //   const source = map.current.getSource("heat-data") as maplibregl.GeoJSONSource;
 
-    if (source) {
-      source.setData(geojson);
+  //   if (!source) return; // <— protect against undefined
+
+  //   try {
+  //     source.setData(geojson);
+  //   } catch (err) {
+  //     console.warn("Map source not ready yet", err);
+  //   }
+  // }, [month, mapLoaded]);
+
+
+  useEffect(() => {
+    if (!map.current || !mapLoaded || !month) return;
+
+    const [year, monthStr] = month.split("-");
+    const monthNum = Number(monthStr);
+
+    async function fetchHeatData() {
+      try {
+        const res = await fetch(`/excd/${year}/${monthNum}/summary`);
+        if (!res.ok) throw new Error("Failed to fetch");
+
+        const data = await res.json();
+
+        const geojson = convertGridToGeoJSON(data);
+
+        const source = map.current!.getSource("heat-data") as maplibregl.GeoJSONSource;
+        if (source) {
+          source.setData(geojson);
+        }
+      } catch (err) {
+        console.error("Fetch error:", err);
+      }
     }
+
+    fetchHeatData();
   }, [month, mapLoaded]);
+
+
+
 
 // Fly to state when selected
   useEffect(() => {
