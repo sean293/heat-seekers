@@ -5,6 +5,7 @@ import xarray as xr
 import numpy as np
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+import psutil
 
 app = FastAPI(title="Heat Seekers API")
 
@@ -27,6 +28,10 @@ s3 = boto3.client(
 
 BUCKET = os.environ["B2_BUCKET_NAME"]
 
+def log_memory(label: str):
+    process = psutil.Process(os.getpid())
+    mb = process.memory_info().rss / 1024 / 1024
+    print(f"[MEMORY] {label}: {mb:.1f} MB")
 
 def load_tile(year: int, month: int) -> xr.Dataset:
     """Download a monthly EXCD tile from B2 and open it with xarray."""
@@ -94,14 +99,28 @@ def load_tile(year: int, month: int) -> xr.Dataset:
 
 @app.get("/excd/{year}/{month}/summary")
 def get_excd_summary(year: int, month: int):
+    log_memory("start")
+
     ds = load_tile(year, month)
     
+    log_memory("after load_tile")
+
     # Compute mean in chunks to avoid loading everything at once
     summary = ds["EXCD"].mean(dim="time").load()
+
+    log_memory("after mean")
+
     values = summary.values
+
+    log_memory("after .values")
+
     cleaned = np.where(np.isnan(values), None, values).tolist()
+
+    log_memory("after cleaned")
     
     ds.close()  # explicitly free memory after use
+
+    log_memory("after close")
     
     return {
         "year": year,
