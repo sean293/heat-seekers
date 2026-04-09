@@ -37,7 +37,7 @@ const team = [
     {
     name: "Sean Hamilton",
     role: "Web Developer",
-    image: "/images/emptyPic.jpg",
+    image: "/images/sean_hamilton_headshot.jpg",
     education: [
       "education"
       
