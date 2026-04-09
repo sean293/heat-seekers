@@ -129,3 +129,37 @@ def get_excd_summary(year: int, month: int):
         "y": ds["y"].values.tolist(),
         "excd_mean": cleaned
     }
+
+@app.get("/excd/{year}/{month}/summary/chunked")
+def get_excd_summary_chunked(year: int, month: int):
+    """Return a spatial mean summary using chunked processing to reduce memory usage."""
+    log_memory("start")
+    ds = load_tile(year, month)
+    log_memory("after load_tile")
+
+    excd = ds["EXCD"]
+    n_x = len(ds["x"])
+    chunk_size = 100
+    result_rows = []
+
+    for i in range(0, n_x, chunk_size):
+        chunk = excd.isel(x=slice(i, i + chunk_size)).values
+        row_means = np.nanmean(chunk, axis=0)
+        result_rows.append(row_means)
+
+    values = np.vstack(result_rows)
+    log_memory("after chunked mean")
+
+    cleaned = np.where(np.isnan(values), None, values).tolist()
+    x = ds["x"].values.tolist()
+    y = ds["y"].values.tolist()
+    ds.close()
+    log_memory("after close")
+
+    return {
+        "year": year,
+        "month": month,
+        "x": x,
+        "y": y,
+        "excd_mean": cleaned
+    }
