@@ -107,8 +107,22 @@ export default function MapView({
         type: "heatmap",
         source: "heat-data",
         paint: {
-          "heatmap-weight": ["interpolate", ["linear"], ["get", "temp"], 0, 0, 1, 1],
-          "heatmap-intensity": 3,
+          "heatmap-weight": [
+            "interpolate",
+            ["linear"],
+            ["get", "temp"],
+            0, 0,
+            1, 1
+          ],
+
+          "heatmap-intensity": [
+            "interpolate",
+            ["linear"],
+            ["zoom"],
+            3, 0.5,   
+            5.5, 0.6  
+          ],
+
           "heatmap-color": [
             "interpolate", ["linear"], ["heatmap-density"],
             0, "rgba(0, 0, 255, 0)",
@@ -122,9 +136,9 @@ export default function MapView({
             "interpolate",
             ["exponential", 2],
             ["zoom"],
-            3, 8,    // at zoom 3 (zoomed out): small radius
-            5.5, 80  // at zoom 5.5 (max zoom): large radius
-            ],
+            3, 3.65,
+            5.5, 18 
+          ],
           "heatmap-opacity": 0.8,
         },
       });
