@@ -139,7 +139,7 @@ export default function MapView({
       setError(null);
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/excd/${year}/${month}/summary`
+          `${process.env.NEXT_PUBLIC_API_URL}/excd/${year}/${month}/summary/chunked`
         );
         if (!res.ok) {
           setError(`No data for ${year}-${String(month).padStart(2, "0")}`);
