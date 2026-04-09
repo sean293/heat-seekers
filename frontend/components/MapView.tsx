@@ -118,7 +118,13 @@ export default function MapView({
             0.8, "orange",
             1, "red",
           ],
-          "heatmap-radius": 10,
+          "heatmap-radius": [
+            "interpolate",
+            ["exponential", 2],
+            ["zoom"],
+            3, 8,    // at zoom 3 (zoomed out): small radius
+            5.5, 80  // at zoom 5.5 (max zoom): large radius
+            ],
           "heatmap-opacity": 0.8,
         },
       });
