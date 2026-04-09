@@ -119,8 +119,8 @@ export default function MapView({
             "interpolate",
             ["linear"],
             ["zoom"],
-            3, 0.7,   
-            5.5, 0.9  
+            3, 0.5,   
+            5.5, 0.6  
           ],
 
           "heatmap-color": [
