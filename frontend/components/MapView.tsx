@@ -136,8 +136,8 @@ export default function MapView({
             "interpolate",
             ["exponential", 2],
             ["zoom"],
-            3, 3.65,
-            5.5, 18 
+            3, 2,
+            5.5, 12 
           ],
           "heatmap-opacity": 0.8,
         },
