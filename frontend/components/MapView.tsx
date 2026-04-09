@@ -20,8 +20,8 @@ interface ExcdSummaryResponse {
 
 function convertGridToGeoJSON(data: ExcdSummaryResponse): GeoJSON.FeatureCollection {
   const features: GeoJSON.Feature[] = [];
-  for (let xi = 0; xi < data.x.length; xi += 5) {
-    for (let yi = 0; yi < data.y.length; yi += 5) {
+  for (let xi = 0; xi < data.x.length; xi += 1) {
+    for (let yi = 0; yi < data.y.length; yi += 2) {
       const value = data.excd_mean[xi]?.[yi];
       if (value === null || value === undefined || value === 0) continue;
       features.push({
@@ -119,8 +119,8 @@ export default function MapView({
             "interpolate",
             ["linear"],
             ["zoom"],
-            3, 0.5,   
-            5.5, 0.6  
+            3, 1,   
+            5.5, 1.2  
           ],
 
           "heatmap-color": [
