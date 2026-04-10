@@ -21,17 +21,21 @@ const team = [
   },
   {
     name: "Rezaali Mostafa",
-    role: "role",
+    role: "Implementation and development of methodology",
     image: "/images/mostafa.jpg",
     education: [
-      "education"
+      "Ph.D. Candidate in Geography, Climate Sciences"
       
     ],
     interests: [
-      "interests"
+      "Heat wave dynamics and thermodynamic drivers",
+      "Extreme weather event mechanisms and predictability",
+      "Climate variability and change across temporal scales",
+      "Earth system feedback and teleconnections",
+      "Integration of earth system models with machine learning methods"
       
     ],
-    bio: "bio",
+    bio: "I am a PhD candidate in the Department of Geography at the University of Florida, specializing in AI and climate sciences. My research focuses on understanding, detecting, and predicting heat waves and extreme weather events through the integration of numerical climate models with deep learning models.",
     email: "mostafarezaali@ufl.edu"
   },
     {
@@ -109,7 +113,9 @@ export default function AboutPage() {
                   ))}
                 </ul>
               </div>
-
+              <div className="text-gray-700 mt-3">
+                <strong>Bio:</strong>
+              </div>
             <p className="text-gray-600 mt-2">{member.bio}</p>
 
             <a
