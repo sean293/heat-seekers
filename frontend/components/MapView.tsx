@@ -202,6 +202,24 @@ export default function MapView({
     if (center) map.current.flyTo({ center, zoom: 5, speed: 1.2, curve: 1.2 });
   }, [state, mapLoaded]);
 
+    useEffect(() => {
+    if (!map.current || map.current.getContainer().querySelector("#heat-legend") || !mapLoaded ) return;
+
+    const legend = document.createElement("div");
+    legend.id = "heat-legend";
+    legend.className =
+      "absolute bottom-8 right-4 bg-white bg-opacity-90 p-3 rounded shadow text-xs text-gray-700";
+    legend.innerHTML = `
+      <div class="mb-1 font-bold">Heat Wave Exceedance</div>
+      <div class="flex justify-between">
+        <span>Low</span>
+        <span>High</span>
+      </div>
+      <div class="h-2 w-full bg-gradient-to-r from-blue-500 via-cyan-300 via-yellow-300 via-orange-400 to-red-500 rounded mt-1"></div>
+    `;
+    map.current.getContainer().appendChild(legend);
+  }, [mapLoaded]);
+
   return (
     <div className="relative w-full h-[500px]">
       <button
