@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import type * as GeoJSON from "geojson";
+import usStatesGeoJSON from "./us-states.json"
 
 const DEFAULT_VIEW = {
   center: [-98, 39] as [number, number],
@@ -140,6 +141,22 @@ export default function MapView({
             5.5, 12 
           ],
           "heatmap-opacity": 0.8,
+        },
+      });
+
+      // Add state borders
+      map.current!.addSource("states", {
+        type: "geojson",
+        data: usStatesGeoJSON as GeoJSON.FeatureCollection,
+      });
+
+      map.current!.addLayer({
+        id: "state-borders",
+        type: "line",
+        source: "states",
+        paint: {
+          "line-color": "#333",
+          "line-width": 1.2,
         },
       });
       requestAnimationFrame(() => map.current?.resize());
