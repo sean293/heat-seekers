@@ -53,6 +53,8 @@ const stateCenters: Record<string, [number, number]> = {
   WA: [-120.7, 47.4], WV: [-80.7, 38.9], WI: [-89.5, 44.5], WY: [-107.5, 43.0],
 };
 
+const MAX_SNAP_DISTANCE = 2;
+
 export default function MapView({
   year,
   month,
@@ -66,6 +68,8 @@ export default function MapView({
 }) {
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const map = useRef<maplibregl.Map | null>(null);
+  const geojsonRef = useRef<GeoJSON.FeatureCollection>({ type: "FeatureCollection", features: [] });
+  const popupRef = useRef<maplibregl.Popup | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -159,6 +163,52 @@ export default function MapView({
           "line-width": 1.2,
         },
       });
+
+      // Click handler: find nearest data point
+      map.current!.on("click", (e) => {
+        const { lng, lat } = e.lngLat;
+        const features = geojsonRef.current.features;
+        if (!features.length) return;
+
+        let closest: GeoJSON.Feature | null = null;
+        let minDist = Infinity;
+
+        for (const feature of features) {
+          const [fx, fy] = (feature.geometry as GeoJSON.Point).coordinates;
+          const d = (fx - lng) ** 2 + (fy - lat) ** 2;
+          if (d < minDist) {
+            minDist = d;
+            closest = feature;
+          }
+        }
+
+        // Only show popup if click is within threshold
+        if (!closest || minDist > MAX_SNAP_DISTANCE ** 2) {
+          popupRef.current?.remove();
+          return;
+        }
+
+        const [closestLng, closestLat] = (closest.geometry as GeoJSON.Point).coordinates;
+        const value = (closest.properties as { temp: number }).temp;
+
+        // Remove any existing popup
+        popupRef.current?.remove();
+
+        popupRef.current = new maplibregl.Popup({ closeButton: true, closeOnClick: false })
+          .setLngLat([closestLng, closestLat])
+          .setHTML(
+            `<div style="font-size:13px;line-height:1.5;">
+              <div style="font-weight:600;margin-bottom:2px;">Exceedance</div>
+              <div>${(value * 100).toFixed(1)}% above 95th pct</div>
+              <div style="color:#888;font-size:11px;margin-top:2px;">${closestLat.toFixed(2)}°N, ${Math.abs(closestLng).toFixed(2)}°W</div>
+            </div>`
+          )
+          .addTo(map.current!);
+      });
+
+      // Change cursor to pointer on map canvas to hint it's clickable
+      map.current!.getCanvas().style.cursor = "pointer";
+
       requestAnimationFrame(() => map.current?.resize());
       setMapLoaded(true);
     });
@@ -174,6 +224,7 @@ export default function MapView({
     const fetchAndRender = async () => {
       setLoading(true);
       setError(null);
+      popupRef.current?.remove(); // Remove any open popup when changing data
       try {
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/excd/${year}/${month}/summary/chunked`
@@ -184,6 +235,7 @@ export default function MapView({
         }
         const data: ExcdSummaryResponse = await res.json();
         const geojson = convertGridToGeoJSON(data);
+        geojsonRef.current = geojson; // Store for click lookup
         const source = map.current!.getSource("heat-data") as maplibregl.GeoJSONSource;
         if (source) source.setData(geojson);
       } catch {
@@ -210,7 +262,7 @@ export default function MapView({
     legend.className =
       "absolute bottom-8 right-4 bg-white bg-opacity-90 p-3 rounded shadow text-xs text-gray-700";
     legend.innerHTML = `
-      <div class="mb-1 font-bold">Heat Wave Exceedance</div>
+      <div class="mb-1 font-bold">Exceedance above 95th percentile</div>
       <div class="flex justify-between">
         <span>Low</span>
         <span>High</span>
