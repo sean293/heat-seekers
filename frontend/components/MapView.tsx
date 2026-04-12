@@ -197,7 +197,7 @@ export default function MapView({
         popupRef.current = new maplibregl.Popup({ closeButton: true, closeOnClick: false })
           .setLngLat([closestLng, closestLat])
           .setHTML(
-            `<div style="font-size:13px;line-height:1.5;">
+            `<div style="font-size:13px;line-height:1.5; text-gray-700;">
               <div style="font-weight:600;margin-bottom:2px;">Exceedance</div>
               <div>${(value * 100).toFixed(1)}% above 95th pct</div>
               <div style="color:#888;font-size:11px;margin-top:2px;">${closestLat.toFixed(2)}°N, ${Math.abs(closestLng).toFixed(2)}°W</div>
