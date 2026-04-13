@@ -7,6 +7,7 @@ import numpy as np
 import psutil
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from functools import lru_cache
 
 app = FastAPI(title="Heat Seekers API")
 
@@ -85,18 +86,21 @@ def get_hsci():
         return result
 
 
+@lru_cache(maxsize=50)
+def get_summary_cached(year: int, month: int):
+    key = f"summaries/excd_{year}_{month:02d}_summary.json"
+    response = s3.get_object(Bucket=BUCKET, Key=key)
+    return json.loads(response["Body"].read())
+
 @app.get("/excd/{year}/{month}/summary")
 def get_excd_summary(year: int, month: int):
     log_memory(f"summary {year}-{month:02d} start")
-    key = f"summaries/excd_{year}_{month:02d}_summary.json"
-    print(f"[DEBUG] Looking up key: {key}")  # add this line
     try:
-        response = s3.get_object(Bucket=BUCKET, Key=key)
-        data = json.loads(response["Body"].read())
+        data = get_summary_cached(year, month)
         log_memory(f"summary {year}-{month:02d} end")
         return data
     except Exception as e:
-        print(f"[DEBUG] S3 error: {str(e)}")  # add this line
+        print(f"[DEBUG] S3 error: {str(e)}")
         raise HTTPException(
             status_code=404,
             detail=f"No precomputed summary for {year}-{month:02d}"
