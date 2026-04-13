@@ -105,6 +105,7 @@ def get_excd_summary(year: int, month: int):
 @app.get("/excd/{year}/{month}")
 def get_excd(year: int, month: int):
     """Return EXCD spatial data for a given year and month."""
+    # Log memory usage
     log_memory(f"excd {year}-{month:02d} start")
     ds = load_tile(year, month)
     excd = ds["EXCD"]
