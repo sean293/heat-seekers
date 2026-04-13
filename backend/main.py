@@ -66,6 +66,12 @@ def test_b2():
     files = [obj["Key"] for obj in objects.get("Contents", [])]
     return {"files": files}
 
+@app.get("/test-summaries")
+def test_summaries():
+    objects = s3.list_objects_v2(Bucket=BUCKET, Prefix="summaries/")
+    files = [obj["Key"] for obj in objects.get("Contents", [])]
+    return {"count": len(files), "files": files[:10]}
+
 
 @app.get("/hsci")
 def get_hsci():
