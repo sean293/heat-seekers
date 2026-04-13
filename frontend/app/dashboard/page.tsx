@@ -28,7 +28,7 @@ export default function Dashboard() {
               onChange={(e) => setChartType(e.target.value)}
             >
               <option value="line">Time Series</option>
-              <option value="map">Geographic Map</option>
+              <option value="map">Heat Map</option>
             </select>
           </div>
 

@@ -21,8 +21,42 @@ const team = [
   },
   {
     name: "Rezaali Mostafa",
-    role: "role",
+    role: "Implementation and development of methodology",
     image: "/images/mostafa.jpg",
+    education: [
+      "Ph.D. Candidate in Geography, Climate Sciences"
+      
+    ],
+    interests: [
+      "Heat wave dynamics and thermodynamic drivers",
+      "Extreme weather event mechanisms and predictability",
+      "Climate variability and change across temporal scales",
+      "Earth system feedback and teleconnections",
+      "Integration of earth system models with machine learning methods"
+      
+    ],
+    bio: "I am a PhD candidate in the Department of Geography at the University of Florida, specializing in AI and climate sciences. My research focuses on understanding, detecting, and predicting heat waves and extreme weather events through the integration of numerical climate models with deep learning models.",
+    email: "mostafarezaali@ufl.edu"
+  },
+    {
+    name: "Sean Hamilton",
+    role: "Web Developer",
+    image: "/images/sean_hamilton_headshot.jpg",
+    education: [
+      "education"
+      
+    ],
+    interests: [
+      "interests"
+      
+    ],
+    bio: "bio",
+    email: ""
+  },
+    {
+    name: "Andrew Berland",
+    role: "Web Developer",
+    image: "/images/emptyPic.jpg",
     education: [
       "education"
       
@@ -34,6 +68,7 @@ const team = [
     bio: "bio",
     email: "mostafarezaali@ufl.edu"
   }
+
 ];
 
 export default function AboutPage() {
@@ -78,7 +113,9 @@ export default function AboutPage() {
                   ))}
                 </ul>
               </div>
-
+              <div className="text-gray-700 mt-3">
+                <strong>Bio:</strong>
+              </div>
             <p className="text-gray-600 mt-2">{member.bio}</p>
 
             <a
