@@ -9,6 +9,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from functools import lru_cache
 from fastapi.responses import Response
+import gc
 
 app = FastAPI(title="Heat Seekers API")
 
