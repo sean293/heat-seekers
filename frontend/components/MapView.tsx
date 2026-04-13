@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import type * as GeoJSON from "geojson";
-import usStatesGeoJSON from "./us-states.json"
+import usStatesGeoJSON from "./us-states.json";
 
 const DEFAULT_VIEW = {
   center: [-98, 39] as [number, number],
@@ -12,8 +12,13 @@ const DEFAULT_VIEW = {
 };
 
 interface ExcdSummaryResponse {
-  year: number;
-  month: number;
+  year?: number;
+  month?: number;
+  start_year?: number;
+  start_month?: number;
+  end_year?: number;
+  end_month?: number;
+  tiles_processed?: number;
   x: number[];
   y: number[];
   excd_mean: (number | null)[][];
@@ -60,11 +65,21 @@ export default function MapView({
   month,
   state,
   onResetState,
+  rangeMode,
+  startYear,
+  startMonth,
+  endYear,
+  endMonth,
 }: {
   year: number;
   month: number;
   state: string;
   onResetState: () => void;
+  rangeMode: boolean;
+  startYear: number;
+  startMonth: number;
+  endYear: number;
+  endMonth: number;
 }) {
   const mapContainer = useRef<HTMLDivElement | null>(null);
   const map = useRef<maplibregl.Map | null>(null);
@@ -73,6 +88,7 @@ export default function MapView({
   const [mapLoaded, setMapLoaded] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tilesProcessed, setTilesProcessed] = useState<number | null>(null);
 
   function resetView() {
     if (map.current) {
@@ -90,6 +106,7 @@ export default function MapView({
     onResetState();
   }
 
+  // Initialize map once
   useEffect(() => {
     if (map.current) return;
     map.current = new maplibregl.Map({
@@ -112,22 +129,8 @@ export default function MapView({
         type: "heatmap",
         source: "heat-data",
         paint: {
-          "heatmap-weight": [
-            "interpolate",
-            ["linear"],
-            ["get", "temp"],
-            0, 0,
-            1, 1
-          ],
-
-          "heatmap-intensity": [
-            "interpolate",
-            ["linear"],
-            ["zoom"],
-            3, 0.3,   
-            5.5, 0.4  
-          ],
-
+          "heatmap-weight": ["interpolate", ["linear"], ["get", "temp"], 0, 0, 1, 1],
+          "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 3, 0.3, 5.5, 0.4],
           "heatmap-color": [
             "interpolate", ["linear"], ["heatmap-density"],
             0, "rgba(0, 0, 255, 0)",
@@ -137,67 +140,44 @@ export default function MapView({
             0.8, "orange",
             1, "red",
           ],
-          "heatmap-radius": [
-            "interpolate",
-            ["exponential", 2],
-            ["zoom"],
-            3, 2.5,
-            5.5, 12 
-          ],
+          "heatmap-radius": ["interpolate", ["exponential", 2], ["zoom"], 3, 2.5, 5.5, 12],
           "heatmap-opacity": 0.8,
         },
       });
 
-      // Add state borders
       map.current!.addSource("states", {
         type: "geojson",
         data: usStatesGeoJSON as GeoJSON.FeatureCollection,
       });
-
       map.current!.addLayer({
         id: "state-borders",
         type: "line",
         source: "states",
-        paint: {
-          "line-color": "#333",
-          "line-width": 1.2,
-        },
+        paint: { "line-color": "#333", "line-width": 1.2 },
       });
 
-      // Click handler: find nearest data point
       map.current!.on("click", (e) => {
         const { lng, lat } = e.lngLat;
         const features = geojsonRef.current.features;
         if (!features.length) return;
-
         let closest: GeoJSON.Feature | null = null;
         let minDist = Infinity;
-
         for (const feature of features) {
           const [fx, fy] = (feature.geometry as GeoJSON.Point).coordinates;
           const d = (fx - lng) ** 2 + (fy - lat) ** 2;
-          if (d < minDist) {
-            minDist = d;
-            closest = feature;
-          }
+          if (d < minDist) { minDist = d; closest = feature; }
         }
-
-        // Only show popup if click is within threshold
         if (!closest || minDist > MAX_SNAP_DISTANCE ** 2) {
           popupRef.current?.remove();
           return;
         }
-
         const [closestLng, closestLat] = (closest.geometry as GeoJSON.Point).coordinates;
         const value = (closest.properties as { temp: number }).temp;
-
-        // Remove any existing popup
         popupRef.current?.remove();
-
         popupRef.current = new maplibregl.Popup({ closeButton: true, closeOnClick: false })
           .setLngLat([closestLng, closestLat])
           .setHTML(
-            `<div style="color: #222; font-size:13px; line-height:1.5;">
+            `<div style="color:#222;font-size:13px;line-height:1.5;">
               <div style="font-weight:600;margin-bottom:2px;">Exceedance</div>
               <div>${(value * 100).toFixed(1)}% above 95th pct</div>
               <div style="color:#888;font-size:11px;margin-top:2px;">${closestLat.toFixed(2)}°N, ${Math.abs(closestLng).toFixed(2)}°W</div>
@@ -206,36 +186,40 @@ export default function MapView({
           .addTo(map.current!);
       });
 
-      // Change cursor to pointer on map canvas to hint it's clickable
       map.current!.getCanvas().style.cursor = "pointer";
-
       requestAnimationFrame(() => map.current?.resize());
       setMapLoaded(true);
     });
-    return () => {
-      map.current?.remove();
-      map.current = null;
-    };
+    return () => { map.current?.remove(); map.current = null; };
   }, []);
 
-  // Fetch real data when year/month changes
+  // Fetch data when controls change
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
     const fetchAndRender = async () => {
       setLoading(true);
       setError(null);
-      popupRef.current?.remove(); // Remove any open popup when changing data
+      setTilesProcessed(null);
+      popupRef.current?.remove();
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/excd/${year}/${month}/summary`
-        );
+        let url: string;
+        if (rangeMode) {
+          url = `${process.env.NEXT_PUBLIC_API_URL}/excd/range/summary?start_year=${startYear}&start_month=${startMonth}&end_year=${endYear}&end_month=${endMonth}`;
+        } else {
+          url = `${process.env.NEXT_PUBLIC_API_URL}/excd/${year}/${month}/summary`;
+        }
+        const res = await fetch(url);
         if (!res.ok) {
-          setError(`No data for ${year}-${String(month).padStart(2, "0")}`);
+          const err = await res.json();
+          setError(err.detail || "No data available");
           return;
         }
         const data: ExcdSummaryResponse = await res.json();
+        if (data.tiles_processed !== undefined) {
+          setTilesProcessed(data.tiles_processed);
+        }
         const geojson = convertGridToGeoJSON(data);
-        geojsonRef.current = geojson; // Store for click lookup
+        geojsonRef.current = geojson;
         const source = map.current!.getSource("heat-data") as maplibregl.GeoJSONSource;
         if (source) source.setData(geojson);
       } catch {
@@ -245,28 +229,24 @@ export default function MapView({
       }
     };
     fetchAndRender();
-  }, [year, month, mapLoaded]);
+  }, [year, month, rangeMode, startYear, startMonth, endYear, endMonth, mapLoaded]);
 
-  // Fly to state when selected
+  // Fly to state
   useEffect(() => {
     if (!map.current || !state || !mapLoaded) return;
     const center = stateCenters[state];
     if (center) map.current.flyTo({ center, zoom: 5, speed: 1.2, curve: 1.2 });
   }, [state, mapLoaded]);
 
-    useEffect(() => {
-    if (!map.current || map.current.getContainer().querySelector("#heat-legend") || !mapLoaded ) return;
-
+  // Legend
+  useEffect(() => {
+    if (!map.current || map.current.getContainer().querySelector("#heat-legend") || !mapLoaded) return;
     const legend = document.createElement("div");
     legend.id = "heat-legend";
-    legend.className =
-      "absolute bottom-8 right-4 bg-white bg-opacity-90 p-3 rounded shadow text-xs text-gray-700";
+    legend.className = "absolute bottom-8 right-4 bg-white bg-opacity-90 p-3 rounded shadow text-xs text-gray-700";
     legend.innerHTML = `
       <div class="mb-1 font-bold">Exceedance above 95th percentile</div>
-      <div class="flex justify-between">
-        <span>Low</span>
-        <span>High</span>
-      </div>
+      <div class="flex justify-between"><span>Low</span><span>High</span></div>
       <div class="h-2 w-full bg-gradient-to-r from-blue-500 via-cyan-300 via-yellow-300 via-orange-400 to-red-500 rounded mt-1"></div>
     `;
     map.current.getContainer().appendChild(legend);
@@ -282,7 +262,12 @@ export default function MapView({
       </button>
       {loading && (
         <div className="absolute top-3 left-3 z-20 bg-white shadow px-3 py-1 rounded-md text-sm text-orange-500">
-          Loading...
+          {rangeMode ? "Computing range average..." : "Loading..."}
+        </div>
+      )}
+      {!loading && tilesProcessed !== null && (
+        <div className="absolute top-3 left-3 z-20 bg-white shadow px-3 py-1 rounded-md text-sm text-gray-600">
+          Averaged {tilesProcessed} months
         </div>
       )}
       {error && (
