@@ -87,15 +87,16 @@ def get_hsci():
 
 @app.get("/excd/{year}/{month}/summary")
 def get_excd_summary(year: int, month: int):
-    """Serve precomputed monthly summary JSON from B2."""
     log_memory(f"summary {year}-{month:02d} start")
     key = f"summaries/excd_{year}_{month:02d}_summary.json"
+    print(f"[DEBUG] Looking up key: {key}")  # add this line
     try:
         response = s3.get_object(Bucket=BUCKET, Key=key)
         data = json.loads(response["Body"].read())
         log_memory(f"summary {year}-{month:02d} end")
         return data
-    except Exception:
+    except Exception as e:
+        print(f"[DEBUG] S3 error: {str(e)}")  # add this line
         raise HTTPException(
             status_code=404,
             detail=f"No precomputed summary for {year}-{month:02d}"
