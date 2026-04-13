@@ -8,6 +8,7 @@ import psutil
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from functools import lru_cache
+import gc
 
 app = FastAPI(title="Heat Seekers API")
 
@@ -86,17 +87,20 @@ def get_hsci():
         return result
 
 
-@lru_cache(maxsize=50)
-def get_summary_cached(year: int, month: int):
+@lru_cache(maxsize=20)
+def get_summary_cached(year: int, month: int) -> str:
+    """Fetch and cache summary JSON string from B2. Returns raw string to avoid dict copying."""
     key = f"summaries/excd_{year}_{month:02d}_summary.json"
     response = s3.get_object(Bucket=BUCKET, Key=key)
-    return json.loads(response["Body"].read())
+    return response["Body"].read().decode("utf-8")
+
 
 @app.get("/excd/{year}/{month}/summary")
 def get_excd_summary(year: int, month: int):
     log_memory(f"summary {year}-{month:02d} start")
     try:
-        data = get_summary_cached(year, month)
+        raw = get_summary_cached(year, month)
+        data = json.loads(raw)
         log_memory(f"summary {year}-{month:02d} end")
         return data
     except Exception as e:
@@ -105,6 +109,8 @@ def get_excd_summary(year: int, month: int):
             status_code=404,
             detail=f"No precomputed summary for {year}-{month:02d}"
         )
+    finally:
+        gc.collect()
 
 
 @app.get("/excd/{year}/{month}")
