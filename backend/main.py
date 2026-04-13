@@ -87,25 +87,6 @@ def get_hsci():
         return result
 
 
-@app.get("/excd/{year}/{month}")
-def get_excd(year: int, month: int):
-    """Return EXCD spatial data for a given year and month."""
-    log_memory(f"excd {year}-{month:02d} start")
-    ds = load_tile(year, month)
-    excd = ds["EXCD"]
-    result = {
-        "year": year,
-        "month": month,
-        "x": ds["x"].values.tolist(),
-        "y": ds["y"].values.tolist(),
-        "time": [str(t) for t in ds["time"].values],
-        "excd": excd.values.tolist()
-    }
-    ds.close()
-    log_memory(f"excd {year}-{month:02d} end")
-    return result
-
-
 @app.get("/excd/{year}/{month}/summary")
 def get_excd_summary(year: int, month: int):
     """
@@ -186,3 +167,21 @@ def get_excd_summary_chunked(year: int, month: int):
         "y": y,
         "excd_mean": cleaned
     }
+
+@app.get("/excd/{year}/{month}")
+def get_excd(year: int, month: int):
+    """Return EXCD spatial data for a given year and month."""
+    log_memory(f"excd {year}-{month:02d} start")
+    ds = load_tile(year, month)
+    excd = ds["EXCD"]
+    result = {
+        "year": year,
+        "month": month,
+        "x": ds["x"].values.tolist(),
+        "y": ds["y"].values.tolist(),
+        "time": [str(t) for t in ds["time"].values],
+        "excd": excd.values.tolist()
+    }
+    ds.close()
+    log_memory(f"excd {year}-{month:02d} end")
+    return result
