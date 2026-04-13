@@ -19,7 +19,6 @@ app.add_middleware(
     max_age=3600,
 )
 
-# Initialize B2 client
 s3 = boto3.client(
     's3',
     endpoint_url=os.environ["B2_ENDPOINT_URL"],
@@ -42,7 +41,6 @@ def load_tile(year: int, month: int) -> xr.Dataset:
     tmp = tempfile.NamedTemporaryFile(suffix=".nc", delete=False)
     tmp_path = tmp.name
     tmp.close()
-
     try:
         s3.download_file(BUCKET, key, tmp_path)
     except Exception:
@@ -50,7 +48,6 @@ def load_tile(year: int, month: int) -> xr.Dataset:
             status_code=404,
             detail=f"No data found for {year}-{month:02d}"
         )
-
     return xr.open_dataset(tmp_path)
 
 
@@ -65,6 +62,7 @@ def test_b2():
     objects = s3.list_objects_v2(Bucket=BUCKET)
     files = [obj["Key"] for obj in objects.get("Contents", [])]
     return {"files": files}
+
 
 @app.get("/test-summaries")
 def test_summaries():
@@ -89,10 +87,7 @@ def get_hsci():
 
 @app.get("/excd/{year}/{month}/summary")
 def get_excd_summary(year: int, month: int):
-    """
-    Serve precomputed monthly summary JSON from B2.
-    Near-zero memory overhead — no xarray or numpy computation.
-    """
+    """Serve precomputed monthly summary JSON from B2."""
     log_memory(f"summary {year}-{month:02d} start")
     key = f"summaries/excd_{year}_{month:02d}_summary.json"
     try:
@@ -106,67 +101,6 @@ def get_excd_summary(year: int, month: int):
             detail=f"No precomputed summary for {year}-{month:02d}"
         )
 
-
-@app.get("/excd/{year}/{month}/summary/legacy")
-def get_excd_summary_legacy(year: int, month: int):
-    """
-    Original summary endpoint — computes mean from raw tile.
-    Kept for reference but may exceed 512MB for busy months [1].
-    """
-    log_memory("legacy start")
-    ds = load_tile(year, month)
-    log_memory("legacy after load_tile")
-    summary = ds["EXCD"].mean(dim="time").load()
-    log_memory("legacy after mean")
-    values = summary.values
-    cleaned = np.where(np.isnan(values), None, values).tolist()
-    log_memory("legacy after cleaned")
-    x = ds["x"].values.tolist()
-    y = ds["y"].values.tolist()
-    ds.close()
-    log_memory("legacy after close")
-    return {
-        "year": year,
-        "month": month,
-        "x": x,
-        "y": y,
-        "excd_mean": cleaned
-    }
-
-
-@app.get("/excd/{year}/{month}/summary/chunked")
-def get_excd_summary_chunked(year: int, month: int):
-    """
-    Chunked summary endpoint — lower memory than legacy but still
-    uses xarray. Kept for reference [1].
-    """
-    log_memory("chunked start")
-    ds = load_tile(year, month)
-    log_memory("chunked after load_tile")
-    excd = ds["EXCD"]
-    n_x = len(ds["x"])
-    chunk_size = 100
-    result_rows = []
-
-    for i in range(0, n_x, chunk_size):
-        chunk = excd.isel(x=slice(i, i + chunk_size)).values
-        row_means = np.nanmean(chunk, axis=0)
-        result_rows.append(row_means)
-
-    values = np.vstack(result_rows)
-    log_memory("chunked after mean")
-    cleaned = np.where(np.isnan(values), None, values).tolist()
-    x = ds["x"].values.tolist()
-    y = ds["y"].values.tolist()
-    ds.close()
-    log_memory("chunked after close")
-    return {
-        "year": year,
-        "month": month,
-        "x": x,
-        "y": y,
-        "excd_mean": cleaned
-    }
 
 @app.get("/excd/{year}/{month}")
 def get_excd(year: int, month: int):
