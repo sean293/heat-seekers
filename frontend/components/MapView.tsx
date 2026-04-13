@@ -227,7 +227,7 @@ export default function MapView({
       popupRef.current?.remove(); // Remove any open popup when changing data
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/excd/${year}/${month}/summary/chunked`
+          `${process.env.NEXT_PUBLIC_API_URL}/excd/${year}/${month}/summary`
         );
         if (!res.ok) {
           setError(`No data for ${year}-${String(month).padStart(2, "0")}`);
