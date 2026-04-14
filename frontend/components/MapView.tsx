@@ -289,8 +289,21 @@ export default function MapView({
         Reset View
       </button>
       {loading && (
-        <div className="absolute top-3 left-3 z-20 bg-white shadow px-3 py-1 rounded-md text-sm text-orange-500">
-          {rangeMode ? "Computing range average..." : "Loading..."}
+        <div className={`absolute top-3 left-3 z-20 shadow px-4 py-2 rounded-md text-sm ${
+          rangeMode
+            ? "bg-orange-50 border border-orange-300 text-orange-700"
+            : "bg-white text-orange-500"
+        }`}>
+          {rangeMode ? (
+            <div>
+              <div className="font-semibold">⏳ Computing date range average...</div>
+              <div className="text-xs mt-1 text-orange-600">
+                This may take 1–2 minutes depending on the range size.
+              </div>
+            </div>
+          ) : (
+            "Loading..."
+          )}
         </div>
       )}
       {!loading && tilesProcessed !== null && (
