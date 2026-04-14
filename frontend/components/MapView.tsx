@@ -129,7 +129,17 @@ export default function MapView({
         type: "heatmap",
         source: "heat-data",
         paint: {
-          "heatmap-weight": ["interpolate", ["linear"], ["get", "temp"], 0, 0, 1, 1],
+          // Updated weight scale to reflect actual °C range (-1.2 to 5.0)
+          "heatmap-weight": [
+            "interpolate",
+            ["linear"],
+            ["get", "temp"],
+            -1.2, 0,
+             0,   0.1,
+             1,   0.4,
+             2,   0.7,
+             5,   1.0
+          ],
           "heatmap-intensity": ["interpolate", ["linear"], ["zoom"], 3, 0.3, 5.5, 0.4],
           "heatmap-color": [
             "interpolate", ["linear"], ["heatmap-density"],
@@ -174,13 +184,23 @@ export default function MapView({
         const [closestLng, closestLat] = (closest.geometry as GeoJSON.Point).coordinates;
         const value = (closest.properties as { temp: number }).temp;
         popupRef.current?.remove();
+
+        // Updated popup with scientifically accurate interpretation
         popupRef.current = new maplibregl.Popup({ closeButton: true, closeOnClick: false })
           .setLngLat([closestLng, closestLat])
           .setHTML(
             `<div style="color:#222;font-size:13px;line-height:1.5;">
-              <div style="font-weight:600;margin-bottom:2px;">Exceedance</div>
-              <div>${(value * 100).toFixed(1)}% above 95th pct</div>
-              <div style="color:#888;font-size:11px;margin-top:2px;">${closestLat.toFixed(2)}°N, ${Math.abs(closestLng).toFixed(2)}°W</div>
+              <div style="font-weight:600;margin-bottom:2px;">Heat Exceedance</div>
+              <div>${value.toFixed(2)}°C above 95th percentile</div>
+              <div style="color:#888;font-size:11px;margin-top:2px;">
+                ${value >= 3 ? "⚠️ Extreme (>3°C above threshold)"
+                  : value >= 1.5 ? "🟠 Severe (1.5–3°C above threshold)"
+                  : value >= 0 ? "🟡 Moderate (0–1.5°C above threshold)"
+                  : "🟢 Below threshold"}
+              </div>
+              <div style="color:#888;font-size:11px;margin-top:2px;">
+                ${closestLat.toFixed(2)}°N, ${Math.abs(closestLng).toFixed(2)}°W
+              </div>
             </div>`
           )
           .addTo(map.current!);
@@ -238,16 +258,24 @@ export default function MapView({
     if (center) map.current.flyTo({ center, zoom: 5, speed: 1.2, curve: 1.2 });
   }, [state, mapLoaded]);
 
-  // Legend
+  // Updated legend
   useEffect(() => {
     if (!map.current || map.current.getContainer().querySelector("#heat-legend") || !mapLoaded) return;
     const legend = document.createElement("div");
     legend.id = "heat-legend";
     legend.className = "absolute bottom-8 right-4 bg-white bg-opacity-90 p-3 rounded shadow text-xs text-gray-700";
     legend.innerHTML = `
-      <div class="mb-1 font-bold">Exceedance above 95th percentile</div>
-      <div class="flex justify-between"><span>Low</span><span>High</span></div>
+      <div class="mb-1 font-bold">Temperature above 95th Percentile (°C)</div>
+      <div class="flex justify-between text-xs">
+        <span>0°C</span>
+        <span>2.5°C</span>
+        <span>5°C</span>
+      </div>
       <div class="h-2 w-full bg-gradient-to-r from-blue-500 via-cyan-300 via-yellow-300 via-orange-400 to-red-500 rounded mt-1"></div>
+      <div class="flex justify-between text-xs mt-1 text-gray-500">
+        <span>Moderate</span>
+        <span>Extreme</span>
+      </div>
     `;
     map.current.getContainer().appendChild(legend);
   }, [mapLoaded]);
