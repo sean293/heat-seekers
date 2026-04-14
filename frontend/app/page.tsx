@@ -1,19 +1,5 @@
-// export default function Home() {
-//   return (
-//     <main className="min-h-screen flex items-center justify-center bg-gray-50">
-//       <div className="text-center">
-//         <h1 className="text-4xl font-bold mb-4">
-//           Heat Seekers
-//         </h1>
-//         <p className="text-lg text-gray-600">
-//           Transforming complex research data into accessible visual insights.
-//         </p>
-//       </div>
-//     </main>
-//   );
-// }
-
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Home() {
   return (
@@ -62,14 +48,29 @@ export default function Home() {
           </h2>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-gray-100 h-48 rounded-xl flex items-center justify-center text-gray-500">
-              Chart Preview
+            <div className="bg-gray-100 h-48 rounded-xl overflow=hidden relative">
+              <Image
+                src="/images/heatmap_preview.jpg"
+                alt="Heat Map Preview"
+                layout="fill"
+                objectFit="cover"
+              />
             </div>
-            <div className="bg-gray-100 h-48 rounded-xl flex items-center justify-center text-gray-500">
-              Heat Map Preview
+            <div className="bg-gray-100 h-48 rounded-xl overflow=hidden relative">
+              <Image
+                src="/images/time_series_preview.jpg"
+                alt="Trend Analysis Preview"
+                layout="fill"
+                objectFit="cover"
+              />
             </div>
-            <div className="bg-gray-100 h-48 rounded-xl flex items-center justify-center text-gray-500">
-              Trend Analysis Preview
+            <div className="bg-gray-100 h-48 rounded-xl overflow=hidden relative">
+              <Image
+                src="/images/bar_chart_preview.jpg"
+                alt="Bar Chart Preview"
+                layout="fill"
+                objectFit="cover"
+              />
             </div>
           </div>
         </div>
