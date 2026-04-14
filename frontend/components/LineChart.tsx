@@ -49,6 +49,7 @@ function processAnnual(records: HSCIRecord[]): AnnualPoint[] {
 }
 
 function processMonthly(records: HSCIRecord[]): MonthPoint[] {
+  console.log("Sample time values:", records.slice(0, 5).map(r => r.time));
   const byMonth: Record<number, number[]> = {};
   for (const r of records) {
     const dateStr = String(r.time);
