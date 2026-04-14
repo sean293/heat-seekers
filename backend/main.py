@@ -10,6 +10,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from functools import lru_cache
 from fastapi.responses import Response
 import gc
+from fastapi.responses import StreamingResponse
+import io
+import csv
 
 app = FastAPI(title="Heat Seekers API")
 
@@ -211,3 +214,147 @@ def get_excd(year: int, month: int):
     ds.close()
     log_memory(f"excd {year}-{month:02d} end")
     return result
+
+@app.get("/excd/range/download")
+def download_excd_range(
+    start_year: int,
+    start_month: int,
+    end_year: int,
+    end_month: int
+):
+    """Download averaged EXCD data for a date range as CSV."""
+    if start_year < 1981 or end_year > 2021:
+        raise HTTPException(status_code=400, detail="Data only available from 1981-2021")
+    if start_month < 5 or start_month > 9 or end_month < 5 or end_month > 9:
+        raise HTTPException(status_code=400, detail="Months must be between 5 and 9")
+
+    tiles = []
+    for year in range(start_year, end_year + 1):
+        for month in [5, 6, 7, 8, 9]:
+            if year == start_year and month < start_month:
+                continue
+            if year == end_year and month > end_month:
+                continue
+            tiles.append((year, month))
+
+    if not tiles:
+        raise HTTPException(status_code=400, detail="No valid tiles in range")
+    if len(tiles) > 50:
+        raise HTTPException(status_code=400, detail="Range too large. Max 50 months.")
+
+    accumulator = None
+    count = None
+    x_coords = None
+    y_coords = None
+
+    for year, month in tiles:
+        try:
+            raw = get_summary_cached(year, month)
+            data = json.loads(raw)
+        except Exception:
+            continue
+
+        if x_coords is None:
+            x_coords = data["x"]
+            y_coords = data["y"]
+            n_x = len(x_coords)
+            n_y = len(y_coords)
+            accumulator = np.zeros((n_x, n_y), dtype=np.float32)
+            count = np.zeros((n_x, n_y), dtype=np.float32)
+
+        for xi, row in enumerate(data["excd_mean"]):
+            for yi, val in enumerate(row):
+                if val is not None:
+                    accumulator[xi, yi] += val
+                    count[xi, yi] += 1
+
+        del data
+        gc.collect()
+
+    if accumulator is None:
+        raise HTTPException(status_code=404, detail="No data found for range")
+
+    with np.errstate(invalid="ignore"):
+        result = np.where(count > 0, accumulator / count, np.nan)
+
+    # Build CSV
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "longitude",
+        "latitude", 
+        "excd_mean",
+        "start_year",
+        "start_month",
+        "end_year",
+        "end_month",
+        "months_averaged"
+    ])
+
+    for xi, x in enumerate(x_coords):
+        for yi, y in enumerate(y_coords):
+            val = result[xi, yi]
+            if not np.isnan(val):
+                writer.writerow([
+                    round(float(x), 4),
+                    round(float(y), 4),
+                    round(float(val), 4),
+                    start_year,
+                    start_month,
+                    end_year,
+                    end_month,
+                    len(tiles)
+                ])
+
+    output.seek(0)
+    filename = f"excd_{start_year}_{start_month:02d}_to_{end_year}_{end_month:02d}.csv"
+    
+    del accumulator, count, result
+    gc.collect()
+
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}",
+            "Access-Control-Expose-Headers": "Content-Disposition"
+        }
+    )
+
+
+@app.get("/excd/{year}/{month}/download")
+def download_excd_month(year: int, month: int):
+    """Download a single month EXCD summary as CSV."""
+    key = f"summaries/excd_{year}_{month:02d}_summary.json"
+    try:
+        response = s3.get_object(Bucket=BUCKET, Key=key)
+        data = json.loads(response["Body"].read())
+    except Exception:
+        raise HTTPException(status_code=404, detail=f"No data for {year}-{month:02d}")
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["longitude", "latitude", "excd_mean", "year", "month"])
+
+    for xi, x in enumerate(data["x"]):
+        for yi, y in enumerate(data["y"]):
+            val = data["excd_mean"][xi][yi]
+            if val is not None:
+                writer.writerow([
+                    round(float(x), 4),
+                    round(float(y), 4),
+                    round(float(val), 4),
+                    year,
+                    month
+                ])
+
+    output.seek(0)
+    filename = f"excd_{year}_{month:02d}.csv"
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}",
+            "Access-Control-Expose-Headers": "Content-Disposition"
+        }
+    )

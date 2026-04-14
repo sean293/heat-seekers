@@ -6,6 +6,19 @@ import TempLineChart from "@/components/LineChart";
 const MONTHS = [[5,"May"],[6,"Jun"],[7,"Jul"],[8,"Aug"],[9,"Sep"]] as const;
 const YEARS = Array.from({ length: 41 }, (_, i) => 1981 + i);
 
+function buildDownloadUrl(
+  rangeMode: boolean,
+  year: number, month: number,
+  startYear: number, startMonth: number,
+  endYear: number, endMonth: number
+): string {
+  const base = process.env.NEXT_PUBLIC_API_URL;
+  if (rangeMode) {
+    return `${base}/excd/range/download?start_year=${startYear}&start_month=${startMonth}&end_year=${endYear}&end_month=${endMonth}`;
+  }
+  return `${base}/excd/${year}/${month}/download`;
+}
+
 export default function Dashboard() {
   const [chartType, setChartType] = useState("map");
   const [state, setState] = useState("");
@@ -30,7 +43,7 @@ export default function Dashboard() {
 
         {/* Controls */}
         <div className="bg-white p-6 rounded-xl shadow mb-8 flex flex-wrap gap-6 items-end">
-          
+
           {/* Visualization Type */}
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-700">
@@ -64,7 +77,6 @@ export default function Dashboard() {
               </div>
 
               {!rangeMode ? (
-                /* Single month controls */
                 <>
                   <div>
                     <label className="block text-sm font-medium mb-2 text-gray-700">Year</label>
@@ -92,7 +104,6 @@ export default function Dashboard() {
                   </div>
                 </>
               ) : (
-                /* Range controls */
                 <>
                   <div>
                     <label className="block text-sm font-medium mb-2 text-gray-700">Start Year</label>
@@ -161,6 +172,23 @@ export default function Dashboard() {
                     <option key={s} value={s}>{s}</option>
                   ))}
                 </select>
+              </div>
+
+              {/* Download Button */}
+              <div className="ml-auto">
+                <label className="block text-sm font-medium mb-2 text-gray-700 opacity-0">
+                  Download
+                </label>
+                <a
+                  href={buildDownloadUrl(
+                    rangeMode, year, month,
+                    startYear, startMonth, endYear, endMonth
+                  )}
+                  download
+                  className="flex items-center gap-2 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition text-sm font-medium"
+                >
+                  ⬇ Download CSV
+                </a>
               </div>
             </>
           )}
