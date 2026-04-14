@@ -2,9 +2,9 @@ import Image from "next/image";
 
 const team = [
   {
-    name: "Dr. David Keelings",
+    name: "Dr. David Keellings",
     role: "role",
-    image: "/images/keeling.jpg",
+    image: "/images/keelling.jpg",
     education: [
       "Postdoctoral Associate, Department of Geography & Emerging Pathogens Institute, University of Florida, 2016" ,
       "PhD in Geography, University of Florida, 2015",
@@ -13,10 +13,12 @@ const team = [
 
     ],
     interests: [
-      "interests"
+      "Earth System Science",
+      "Catastrophes, Conservation & Conflict",
+      "Sustainability & Global Enviornmental Change"
 
     ],
-    bio: "bio",
+    bio: "Improving our understanding of climate extremes is a critical challenge. Extremes such as heat waves, hurricanes, floods, and droughts are rare, but have disproportionately large impacts on the health of society and the environment. Through my research I explore climate extremes with an emphasis on linkages between extremes and driving physical mechanisms and on quantifying the contribution of climate change versus modes of natural variability. I enjoy working in interdisciplinary teams and my own strengths lie in utilizing innovative methods including Machine Learning and Extreme Value Theory to improve our understanding of climate extremes and better prepare society for their impacts.",
     email: "djkeellings@ufl.edu"
   },
   {
