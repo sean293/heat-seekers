@@ -58,17 +58,20 @@ const team = [
     {
     name: "Andrew Berland",
     role: "Web Developer",
-    image: "/images/emptyPic.jpg",
+    image: "/images/berland.jpg",
     education: [
-      "education"
+      "B.S. in Computer Science, University of Florida, 2026",
+      "Minor in Digital Arts and Sciences, University of Florida, 2026",
+      "Minor in Electrical Engineering, University of Florida, 2026"
       
     ],
     interests: [
-      "interests"
+      "Software development",
+      "Game development",
       
     ],
-    bio: "bio",
-    email: "mostafarezaali@ufl.edu"
+    bio: "I am a senior at the University of Florida pursuing a B.S. in Computer Science with minors in Digital Arts and Sciences and Electrical Engineering. I am passionate about software development and game development, and I am excited to contribute to this project help this research be more accessable to the public.",
+    email: "aberland@ufl.edu"
   }
 
 ];
