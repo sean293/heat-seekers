@@ -6,16 +6,19 @@ const team = [
     role: "role",
     image: "/images/keelling.jpg",
     education: [
-      "Postdoctoral Associate, Department of Geography & Emerging Pathogens Institute, University of Florida, 2016" ,
+      "PostdPostdoctoral Associate, Department of Geography & Emerging Pathogens Institute, University of Florida, 2016" ,
       "PhD in Geography, University of Florida, 2015",
       "M.S. in Geography, University of Florida, 2010",
       "B.S. in Environmental Studies, University of Central Florida, 2007"
 
     ],
     interests: [
-      "Earth System Science",
-      "Catastrophes, Conservation & Conflict",
-      "Sustainability & Global Enviornmental Change"
+      "Climatology",
+      "Climate Extremes",
+      "Artificial Intelligence",
+      "Applied Machine Learning",
+      "Heat waves",
+      "Hazards"
 
     ],
     bio: "Improving our understanding of climate extremes is a critical challenge. Extremes such as heat waves, hurricanes, floods, and droughts are rare, but have disproportionately large impacts on the health of society and the environment. Through my research I explore climate extremes with an emphasis on linkages between extremes and driving physical mechanisms and on quantifying the contribution of climate change versus modes of natural variability. I enjoy working in interdisciplinary teams and my own strengths lie in utilizing innovative methods including Machine Learning and Extreme Value Theory to improve our understanding of climate extremes and better prepare society for their impacts.",
