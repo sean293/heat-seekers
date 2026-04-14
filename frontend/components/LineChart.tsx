@@ -7,7 +7,7 @@ import {
 } from "recharts";
 
 interface HSCIRecord {
-  time: number;
+  time: string;
   HSCI: number;
 }
 
@@ -34,8 +34,7 @@ const MONTH_NAMES: Record<number, string> = {
 function processAnnual(records: HSCIRecord[]): AnnualPoint[] {
   const byYear: Record<number, number[]> = {};
   for (const r of records) {
-    const dateStr = String(r.time);
-    const year = parseInt(dateStr.slice(0, 4));
+    const year = parseInt(r.time.slice(0, 4));
     if (!byYear[year]) byYear[year] = [];
     byYear[year].push(r.HSCI);
   }
@@ -49,17 +48,16 @@ function processAnnual(records: HSCIRecord[]): AnnualPoint[] {
 }
 
 function processMonthly(records: HSCIRecord[]): MonthPoint[] {
-  console.log("Sample time values:", records.slice(0, 5).map(r => r.time));
   const byMonth: Record<number, number[]> = {};
   for (const r of records) {
-    const dateStr = String(r.time);
-    const month = parseInt(dateStr.slice(4, 6));
+    // time is '1981-05-01T00:00:00' — month is characters 5-6
+    const month = parseInt(r.time.slice(5, 7));
     if (!byMonth[month]) byMonth[month] = [];
     byMonth[month].push(r.HSCI);
   }
   return Object.entries(byMonth)
     .map(([month, vals]) => ({
-      month: MONTH_NAMES[parseInt(month)] ?? month,
+      month: MONTH_NAMES[parseInt(month)] ?? `Month ${month}`,
       avgHsci: parseFloat((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(3)),
     }))
     .sort((a, b) => {
