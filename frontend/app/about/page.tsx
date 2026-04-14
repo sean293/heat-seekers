@@ -43,15 +43,17 @@ const team = [
     role: "Web Developer",
     image: "/images/sean_hamilton_headshot.jpg",
     education: [
-      "education"
-      
+      "B.S. in Computer Science, University of Florida, 2026",
+      "B.A. in Statistics, University of Florida, 2026",
+      "Mathematics minor, University of Florida, 2026",
+      "Geographic Artificial Intelligence and Big Data Certificate, University of Florida, 2026"
     ],
     interests: [
-      "interests"
-      
+      "Computer vision",
+      "Geostatistical modeling"
     ],
-    bio: "bio",
-    email: ""
+    bio: "I am a fourth year undergraduate student in the College of Liberal Arts and Sciences at the University of Florida. I started working towards a GeoAI certificate in the summer of my freshman year and quickly developed an interest in geospatial data. Since then, I've worked on a bevy of projects involving this kind of data. Some of my projects include analyzing patterns of lightning strikes in Northern Alabama using kriging, helping students find study spaces on campus by developing a website, and using DeepForest to count trees in Gainesville. Recently I have been working in the Gator Glaciology Lab to geostatistically simulate the subglacial topography of Antarctica and I have had the privelidge of working on this dashboard to make Dr. Keellings and Mostafa Rezaali's research more accessible!",
+    email: "sean.hamilton@ufl.edu"
   },
     {
     name: "Andrew Berland",
