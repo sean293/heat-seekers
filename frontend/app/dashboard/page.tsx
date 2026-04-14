@@ -3,11 +3,36 @@ import { useState } from "react";
 import MapView from "@/components/MapView";
 import TempLineChart from "@/components/LineChart";
 
+const MONTHS = [[5,"May"],[6,"Jun"],[7,"Jul"],[8,"Aug"],[9,"Sep"]] as const;
+const YEARS = Array.from({ length: 41 }, (_, i) => 1981 + i);
+
+function buildDownloadUrl(
+  rangeMode: boolean,
+  year: number, month: number,
+  startYear: number, startMonth: number,
+  endYear: number, endMonth: number
+): string {
+  const base = process.env.NEXT_PUBLIC_API_URL;
+  if (rangeMode) {
+    return `${base}/excd/range/download?start_year=${startYear}&start_month=${startMonth}&end_year=${endYear}&end_month=${endMonth}`;
+  }
+  return `${base}/excd/${year}/${month}/download`;
+}
+
 export default function Dashboard() {
   const [chartType, setChartType] = useState("map");
+  const [state, setState] = useState("");
+
+  // Single month mode
   const [year, setYear] = useState(2012);
   const [month, setMonth] = useState(7);
-  const [state, setState] = useState("");
+
+  // Range mode
+  const [rangeMode, setRangeMode] = useState(false);
+  const [startYear, setStartYear] = useState(2010);
+  const [startMonth, setStartMonth] = useState(5);
+  const [endYear, setEndYear] = useState(2012);
+  const [endMonth, setEndMonth] = useState(9);
 
   return (
     <div className="min-h-screen bg-gray-200 px-6 py-10">
@@ -18,6 +43,8 @@ export default function Dashboard() {
 
         {/* Controls */}
         <div className="bg-white p-6 rounded-xl shadow mb-8 flex flex-wrap gap-6 items-end">
+
+          {/* Visualization Type */}
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-700">
               Visualization Type
@@ -34,32 +61,102 @@ export default function Dashboard() {
 
           {chartType === "map" && (
             <>
+              {/* Single vs Range toggle */}
               <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700">Year</label>
+                <label className="block text-sm font-medium mb-2 text-gray-700">
+                  Query Mode
+                </label>
                 <select
                   className="border rounded-lg px-3 py-2 text-gray-700"
-                  value={year}
-                  onChange={(e) => setYear(Number(e.target.value))}
+                  value={rangeMode ? "range" : "single"}
+                  onChange={(e) => setRangeMode(e.target.value === "range")}
                 >
-                  {Array.from({ length: 41 }, (_, i) => 1981 + i).map((y) => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
+                  <option value="single">Single Month</option>
+                  <option value="range">Date Range Average</option>
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2 text-gray-700">Month</label>
-                <select
-                  className="border rounded-lg px-3 py-2 text-gray-700"
-                  value={month}
-                  onChange={(e) => setMonth(Number(e.target.value))}
-                >
-                  {[[5,"May"],[6,"Jun"],[7,"Jul"],[8,"Aug"],[9,"Sep"]].map(([m, label]) => (
-                    <option key={m} value={m}>{label}</option>
-                  ))}
-                </select>
-              </div>
+              {!rangeMode ? (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700">Year</label>
+                    <select
+                      className="border rounded-lg px-3 py-2 text-gray-700"
+                      value={year}
+                      onChange={(e) => setYear(Number(e.target.value))}
+                    >
+                      {YEARS.map((y) => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700">Month</label>
+                    <select
+                      className="border rounded-lg px-3 py-2 text-gray-700"
+                      value={month}
+                      onChange={(e) => setMonth(Number(e.target.value))}
+                    >
+                      {MONTHS.map(([m, label]) => (
+                        <option key={m} value={m}>{label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700">Start Year</label>
+                    <select
+                      className="border rounded-lg px-3 py-2 text-gray-700"
+                      value={startYear}
+                      onChange={(e) => setStartYear(Number(e.target.value))}
+                    >
+                      {YEARS.map((y) => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700">Start Month</label>
+                    <select
+                      className="border rounded-lg px-3 py-2 text-gray-700"
+                      value={startMonth}
+                      onChange={(e) => setStartMonth(Number(e.target.value))}
+                    >
+                      {MONTHS.map(([m, label]) => (
+                        <option key={m} value={m}>{label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700">End Year</label>
+                    <select
+                      className="border rounded-lg px-3 py-2 text-gray-700"
+                      value={endYear}
+                      onChange={(e) => setEndYear(Number(e.target.value))}
+                    >
+                      {YEARS.filter(y => y >= startYear).map((y) => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-700">End Month</label>
+                    <select
+                      className="border rounded-lg px-3 py-2 text-gray-700"
+                      value={endMonth}
+                      onChange={(e) => setEndMonth(Number(e.target.value))}
+                    >
+                      {MONTHS.map(([m, label]) => (
+                        <option key={m} value={m}>{label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </>
+              )}
 
+              {/* Jump to State */}
               <div>
                 <label className="block text-sm font-medium mb-2 text-gray-700">Jump to State</label>
                 <select
@@ -75,6 +172,23 @@ export default function Dashboard() {
                     <option key={s} value={s}>{s}</option>
                   ))}
                 </select>
+              </div>
+
+              {/* Download Button */}
+              <div className="ml-auto">
+                <label className="block text-sm font-medium mb-2 text-gray-700 opacity-0">
+                  Download
+                </label>
+                <a
+                  href={buildDownloadUrl(
+                    rangeMode, year, month,
+                    startYear, startMonth, endYear, endMonth
+                  )}
+                  download
+                  className="flex items-center gap-2 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition text-sm font-medium"
+                >
+                  ⬇ Download CSV
+                </a>
               </div>
             </>
           )}
@@ -93,6 +207,11 @@ export default function Dashboard() {
               month={month}
               state={state}
               onResetState={() => setState("")}
+              rangeMode={rangeMode}
+              startYear={startYear}
+              startMonth={startMonth}
+              endYear={endYear}
+              endMonth={endMonth}
             />
           )}
         </div>
